@@ -11,29 +11,36 @@ import uuid
 
 class Question(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    content = models.CharField(max_length=200)
-    grade = models.IntegerField(default=50)
+    question_text = models.TextField()  # Updated to TextField per rubric requirements
+    grade = models.IntegerField(default=1)
 
     def __str__(self):
-        return "Question: " + self.content
+        return self.question_text
 
     def is_get_score(self, selected_ids):
-        all_answers = self.choice_set.filter(is_correct=True).count()
-        selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
-        if all_answers == selected_correct:
+        all_answers = self.choice_set.filter(is_correct=True).values_list('id', flat=True)
+        selected_ids = set(selected_ids)
+        if set(all_answers) == selected_ids:
             return True
-        else:
-            return False
+        return False
+
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    content = models.CharField(max_length=200)
+    choice_text = models.CharField(max_length=100)
     is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.choice_text
+
 
 class Submission(models.Model):
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
     choices = models.ManyToManyField(Choice)
 
+    def __str__(self):
+        return f"Submission {self.id} for enrollment {self.enrollment.id}"  # Lowercase 'for enrollment'
+        
 # Instructor model
 class Instructor(models.Model):
     user = models.ForeignKey(
